@@ -11,10 +11,16 @@
     <Product>Gdr2333.MausBot3</Product>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <Title>Gdr2333.MausBot3.PluginSdk</Title>
+    <PackageProjectUrl>https://github.com/gdr2333/Gdr2333.MausBot3</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/gdr2333/Gdr2333.MausBot3</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>qqbot</PackageTags>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Gdr2333.BotLib.OnebotV11" Version="1.0.0-beta1" />
+    <PackageReference Include="Gdr2333.BotLib.OnebotV11" Version="1.0.0-beta2-hotfix1" />
   </ItemGroup>
 
 </Project>

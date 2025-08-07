@@ -6,20 +6,35 @@ using Gdr2333.BotLib.OnebotV11.Events;
 
 namespace Gdr2333.MausBot3.PluginSdk;
 
-public abstract class Command<T> : CommandBase
+public class Command<T>(
+    string name,
+    string[] alias,
+    string description,
+    Action<OnebotV11ClientBase, T> handler,
+    Func<T, bool> check,
+    sbyte priority = 0,
+    bool exclusive = false,
+    bool adminRequired = false) 
+    : CommandBase<T>
     where T : OnebotV11EventArgsBase
 {
-    public abstract string CommandName { get; }
+    public override string CommandName => name;
 
-    public abstract string[] CommandAilas { get; }
+    public override string[] CommandAlias => alias;
 
-    public abstract string CommandDescription { get; }
+    public override string CommandDescription => description;
 
-    public abstract bool IsExclusiveHandler { get; }
+    public override bool IsExclusiveHandler => exclusive;
 
-    public abstract bool IsPassive { get; }
+    public override sbyte Priority => priority;
 
-    public abstract bool CheckHandle(T message);
+    public override bool AdminRequired => adminRequired;
 
-    public abstract void Handle(OnebotV11ClientBase client, T message);
+    public bool Hide { get; internal set; } = false;
+
+    public override bool CheckHandle(T message) =>
+        check(message);
+
+    public override void Handle(OnebotV11ClientBase client, T message) =>
+        handler(client, message);
 }

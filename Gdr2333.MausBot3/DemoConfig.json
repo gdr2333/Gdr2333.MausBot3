@@ -1,0 +1,31 @@
+{
+  "Address": "http://localhost:12345",
+  "AccessToken": "114514",
+  "GlobalBlockRoles": [
+    {
+      "TargetType": "Group",
+      "Target": 1919810
+    }
+  ],
+  "CommandBlockRoles": {
+    "Gdr2333.MausBot3.InternalPlugins.Admin::\u6210\u4E3A\u7BA1\u7406\u5458": [
+      {
+        "TargetType": "User",
+        "Target": 114514
+      }
+    ]
+  },
+  "CommandAliases": {
+    "Gdr2333.MausBot3.InternalPlugins.Admin::\u6210\u4E3A\u7BA1\u7406\u5458": {
+      "UseDefaultAlias": true,
+      "UseDrfaultName": true,
+      "NewAliases": [
+        "\u6211\u8981\u5F53\u7BA1\u7406"
+      ]
+    }
+  },
+  "Admins": [
+    114514
+  ],
+  "Prompt": "#"
+}
