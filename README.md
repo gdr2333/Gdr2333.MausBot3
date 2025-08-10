@@ -1,15 +1,15 @@
 # Gdr2333.MausBot3
 
-**ÖØÒª£º±¾ÏîÄ¿£¨°üÀ¨SDK£©Ê¹ÓÃGPLÐí¿ÉÖ¤£¬°æ±¾3»òÒÔºó°æ±¾¡£¸ÃÐí¿ÉÖ¤¾ßÓÐ´«È¾ÐÔ£¬ÕâÒâÎ¶×Å»ùÓÚ¸ÃÏîÄ¿µÄÄÚÈÝ£¨°üÀ¨Ê¹ÓÃÁËSDKµÄ²å¼þ£©¾ùÊÜÐí¿ÉÖ¤Ô¼Êø¡£¹ØÓÚGPLµÄ¸ü¶àÐÅÏ¢£¬ÇëÇ°Íù[GNUÍøÕ¾](https://www.gnu.org/licenses/licenses.html)²é¿´¡£**
+**é‡è¦ï¼šæœ¬é¡¹ç›®ï¼ˆåŒ…æ‹¬SDKï¼‰ä½¿ç”¨GPLè®¸å¯è¯ï¼Œç‰ˆæœ¬3æˆ–ä»¥åŽç‰ˆæœ¬ã€‚è¯¥è®¸å¯è¯å…·æœ‰ä¼ æŸ“æ€§ï¼Œè¿™æ„å‘³ç€åŸºäºŽè¯¥é¡¹ç›®çš„å†…å®¹ï¼ˆåŒ…æ‹¬ä½¿ç”¨äº†SDKçš„æ’ä»¶ï¼‰å‡å—è®¸å¯è¯çº¦æŸã€‚å…³äºŽGPLçš„æ›´å¤šä¿¡æ¯ï¼Œè¯·å‰å¾€[GNUç½‘ç«™](https://www.gnu.org/licenses/licenses.html)æŸ¥çœ‹ã€‚**
 
-*±¾ÏîÄ¿´¦ÓÚAlpha½×¶Î¡£*
+*æœ¬é¡¹ç›®å¤„äºŽAlphaé˜¶æ®µã€‚*
 
-»ùÓÚC#µÄOnebot V11»úÆ÷ÈË¡£
+åŸºäºŽC#çš„Onebot V11æœºå™¨äººã€‚
 
-ÌØµã£º<br/>
-~~ÎÒËûÂè¾ÍÊÇ¿´¶¯Ì¬ÓïÑÔ²»Ë¬²»ÐÐÂð~~
-- ¸ßÐÔÄÜ£¬µÍÕ¼ÓÃ
-- ¼òµ¥µÄ²å¼þ¿ª·¢»úÖÆ
-- WIP£ºÍêÉÆµÄ£¨È«¾Ö/ÌØ¶¨ÃüÁî£©ºÚÃûµ¥¹ÜÀí£¬ÓÃ»§¿ÉÅäÖÃÃüÁî±ðÃû
+ç‰¹ç‚¹ï¼š<br/>
+~~æˆ‘ä»–å¦ˆå°±æ˜¯çœ‹åŠ¨æ€è¯­è¨€ä¸çˆ½ä¸è¡Œå—~~
+- é«˜æ€§èƒ½ï¼Œä½Žå ç”¨
+- ç®€å•çš„æ’ä»¶å¼€å‘æœºåˆ¶
+- WIPï¼šå®Œå–„çš„ï¼ˆå…¨å±€/ç‰¹å®šå‘½ä»¤ï¼‰é»‘åå•ç®¡ç†ï¼Œç”¨æˆ·å¯é…ç½®å‘½ä»¤åˆ«å
 
-SDK£º[nuget](https://www.nuget.org/packages/Gdr2333.MausBot3.PluginSdk/)
+SDKï¼š[nuget](https://www.nuget.org/packages/Gdr2333.MausBot3.PluginSdk/)
