@@ -8,6 +8,7 @@ using Gdr2333.MausBot3.PluginSdk;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -30,7 +31,62 @@ ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
 
 List<Plugin> plugins = [new AdminPlugin(data, factory)];
 
-// TODO : 基于反射的插件加载
+if (!Directory.Exists("plugins"))
+    Directory.CreateDirectory("plugins");
+
+List<object> DIObjects = [data, factory];
+
+Console.WriteLine("开始搜索插件");
+foreach (var plugindir in Directory.EnumerateDirectories("plugins"))
+{
+    Console.WriteLine($"进入文件夹{plugindir}");
+    foreach (var file in Directory.EnumerateFiles(plugindir))
+    {
+        try
+        {
+            var asm = Assembly.LoadFrom(file);
+            Console.WriteLine($"正在加载插件自{file}");
+            bool havePlugin = false;
+            foreach (var type in asm.GetExportedTypes())
+                if (typeof(Plugin).IsAssignableFrom(type))
+                {
+                    havePlugin |= true;
+                    Console.WriteLine($"找到插件类型{type}，正在尝试初始化");
+                    bool loaded = false;
+                    foreach (var initWay in type.GetConstructors())
+                    {
+                        List<object> para = [];
+                        foreach (var param in initWay.GetParameters())
+                            if (DIObjects.Any(obj => param.ParameterType.IsAssignableFrom(obj.GetType())))
+                                para.Add(DIObjects.Where(obj => param.ParameterType.IsAssignableFrom(obj.GetType())).First());
+                            else
+                                goto TryNext;
+                        var obj = Activator.CreateInstance(type, [.. para]);
+                        if (obj is Plugin plugin)
+                        {
+                            plugins.Add(plugin);
+                            loaded = true;
+                            Console.WriteLine($"初始化了类型{type}，插件ID={plugin.PluginId}");
+                            break;
+                        }
+                    TryNext:;
+                    }
+                    if(!loaded)
+                    {
+                        Console.WriteLine($"无法初始化{type}，继续加载其它类型......");
+                    }
+                }
+            Console.WriteLine($"{file}：检测完成");
+        }
+        catch (BadImageFormatException)
+        {
+        }
+        catch (FileLoadException)
+        {
+            Console.WriteLine($"{file}已被加载，跳过......");
+        }
+    }
+}
 
 List<CommandHelper> commands = [];
 foreach (var plugin in plugins)
