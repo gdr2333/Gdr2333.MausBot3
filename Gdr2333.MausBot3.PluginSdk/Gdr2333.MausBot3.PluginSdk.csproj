@@ -15,8 +15,9 @@
     <PackageProjectUrl>https://github.com/gdr2333/Gdr2333.MausBot3</PackageProjectUrl>
     <RepositoryUrl>https://github.com/gdr2333/Gdr2333.MausBot3</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>qqbot</PackageTags>
+    <PackageTags>qqbot, onebot</PackageTags>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>

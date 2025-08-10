@@ -7,6 +7,18 @@ using System.Text.RegularExpressions;
 
 namespace Gdr2333.MausBot3.PluginSdk;
 
+/// <summary>
+/// 标准文本指令默认包装
+/// </summary>
+/// <param name="name">指令主要名称</param>
+/// <param name="alias">指令别名</param>
+/// <param name="description">指令描述</param>
+/// <param name="regexFormat">正则表达式生成器——{0}作为命令前缀，{1}作为命令名称</param>
+/// <param name="handler">指令执行函数</param>
+/// <param name="extraCheck">输入额外检查</param>
+/// <param name="priority">指令优先级</param>
+/// <param name="exclusive">指令是否会独占输入</param>
+/// <param name="adminRequired">指令是否只能由管理员调用</param>
 public class StandardCommand(
     string name,
     string[] alias,
@@ -23,20 +35,31 @@ public class StandardCommand(
 
     private Regex[] _commandRegexes = [];
 
+    /// <inheritdoc/>
     public override sbyte Priority => priority;
 
+    /// <inheritdoc/>
     public override string CommandName => name;
 
+    /// <inheritdoc/>
     public override string[] CommandAlias => alias;
 
+    /// <inheritdoc/>
     public override string CommandDescription => description;
 
+    /// <inheritdoc/>
     public override bool IsExclusiveHandler => exclusive;
 
+    /// <inheritdoc/>
     public override bool AdminRequired => adminRequired;
 
     private readonly ReaderWriterLockSlim _commandRegexesRWLck = new();
 
+    /// <summary>
+    /// <strong>不应在外部调用</strong>设置指令实际别名
+    /// </summary>
+    /// <param name="prompt">指令前缀</param>
+    /// <param name="alias">指令别名列表</param>
     public void SetRealAlias(string prompt, string[] alias)
     {
         var tmp = Array.ConvertAll(alias, cmd => new Regex(string.Format(CommandFormatRegex, prompt, cmd)));
@@ -51,15 +74,13 @@ public class StandardCommand(
         }
     }
 
-    public bool ExtraCheck(MessageReceivedEventArgsBase message) =>
-        extraCheck?.Invoke(message) ?? true;
-
+    /// <inheritdoc/>
     public override bool CheckHandle(MessageReceivedEventArgsBase message)
     {
         try
         {
             _commandRegexesRWLck.EnterReadLock();
-            return Array.Exists(_commandRegexes, regex => regex.IsMatch(message.Message.ToString())) && ExtraCheck(message);
+            return Array.Exists(_commandRegexes, regex => regex.IsMatch(message.Message.ToString())) && (extraCheck?.Invoke(message) ?? true);
         }
         finally
         {
@@ -67,6 +88,7 @@ public class StandardCommand(
         }
     }
 
+    /// <inheritdoc/>
     public override void Handle(OnebotV11ClientBase client, MessageReceivedEventArgsBase message) =>
         handler(client, message);
 }

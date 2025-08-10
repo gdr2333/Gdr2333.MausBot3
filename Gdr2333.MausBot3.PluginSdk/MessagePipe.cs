@@ -6,6 +6,9 @@ using System.Threading.Channels;
 
 namespace Gdr2333.MausBot3.PluginSdk;
 
+/// <summary>
+/// 消息管线
+/// </summary>
 public class MessagePipe
 {
     internal readonly Channel<Message> ReadChannel = Channel.CreateUnbounded<Message>();
@@ -18,6 +21,11 @@ public class MessagePipe
         _sender = sender;
     }
 
+    /// <summary>
+    /// 接收消息
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>消息内容</returns>
     public async Task<Message> ReadMessageAsync(CancellationToken? cancellationToken = null)
     {
         cancellationToken ??= default;
@@ -25,6 +33,12 @@ public class MessagePipe
         return await ReadChannel.Reader.ReadAsync(cancellationToken.Value);
     }
 
+    /// <summary>
+    /// 发送消息
+    /// </summary>
+    /// <param name="message">消息内容</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>任务</returns>
     public async Task SendMessageAsync(Message message, CancellationToken? cancellationToken = null)
     {
         cancellationToken ??= default;
