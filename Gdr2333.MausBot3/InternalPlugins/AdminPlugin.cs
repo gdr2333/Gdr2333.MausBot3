@@ -4,10 +4,12 @@
 using Gdr2333.BotLib.OnebotV11.Messages;
 using Gdr2333.MausBot3.PluginSdk;
 using Microsoft.Extensions.Logging;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Gdr2333.MausBot3.InternalPlugins;
 
-public class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory) : Plugin
+internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, IList<CommandHelper> commands) : Plugin
 {
     public override string PluginId => "Gdr2333.MausBot3.InternalPlugins.Admin";
 
@@ -101,5 +103,129 @@ public class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory) : Plu
                         await mp.SendMessageAsync(new([new TextPart("管理员验证码错误！")]), ct);
                 }
                 ).Commands,
+            .. new CommandEx(
+                "添加黑名单",
+                [],
+                "将用户或群添加到某个指令或群的黑名单。单行用法：{命令前缀}添加黑名单 [群/用户][群号] [可选：命令ID]",
+                "^{0}{1}(\\s*(群|用户)\\s*\\d+\\s*\\S*)?$",
+                async (mp, se, ct) =>
+                {
+                    bool isGroup;
+                    long targetId;
+                    string? targetCommand = null;
+                    var rs = Regex.Match(se.Message.ToString(), "(群|用户)\\s*(\\d+)\\s*(\\S*)$");
+                    if(rs.Success)
+                    {
+                        isGroup = rs.Groups[0].Value == "群";
+                        if(!long.TryParse(rs.Groups[1].Value, out targetId))
+                        {
+                            await mp.SendMessageAsync(new($"无法解析的{(isGroup ? "群" : "用户")}"), ct);
+                            return;
+                        }
+                        targetCommand = rs.Groups[2].Value;
+                    }
+                    else
+                    {
+                        await mp.SendMessageAsync(new("你想将屏蔽规则用于什么目标？请输入\"群\"或者\"用户\""), ct);
+                        var res0 = (await mp.ReadMessageAsync(ct)).ToString();
+                        if(res0 != "群" && res0 != "用户")
+                            goto WrongInput;
+                        isGroup = res0 == "群";
+                        await mp.SendMessageAsync(new($"你想将屏蔽规则用于什么{(isGroup ? "群" : "用户")}？请输入{(isGroup ? "群" : "用户")}的ID"), ct);
+                        if(!long.TryParse((await mp.ReadMessageAsync(ct)).ToString(), out targetId))
+                            goto WrongInput;
+                        await mp.SendMessageAsync(new("你想将屏蔽规则用于什么指令？请输入指令的ID。输入\"<搜索>\"来寻找可以被屏蔽的指令，输入\"<全局>\"来使该规则全局启用。"), ct);
+                        // 在用户输入内容的时候，让我们计算指令列表
+                        (string Id, string Name, string[] Alias)[] cmds = Array.ConvertAll<CommandHelper, (string Id, string Name, string[] Alias)>([..commands], (cmd) => (cmd.Id, cmd.Command.CommandName, cmd.Command.CommandAlias));
+                        bool hasres = false;
+                        while(!hasres)
+                        {
+                            var res1 = await mp.ReadMessageAsync(ct);
+                            switch(res1.ToString())
+                            {
+                                case "<搜索>":
+                                    await mp.SendMessageAsync(new("请输入你要搜索的关键词："), ct);
+                                    var keyword = await mp.ReadMessageAsync(ct);
+                                    StringBuilder sb = new();
+                                    {
+                                        var equName = from cmdinf in cmds where cmdinf.Name == keyword.ToString() select cmdinf;
+                                        if(equName.Any())
+                                        {
+                                            sb.AppendLine("=====名称，精准匹配=====");
+                                            foreach(var cmd in equName)
+                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                        }
+                                    }
+                                    {
+                                        var inName = from cmdinf in cmds where cmdinf.Name.Contains(keyword.ToString()) select cmdinf;
+                                        if(inName.Any())
+                                        {
+                                            sb.AppendLine("=====名称，模糊匹配=====");
+                                            foreach(var cmd in inName)
+                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                        }
+                                    }
+                                    {
+                                        var equId = from cmdinf in cmds where cmdinf.Id == keyword.ToString() select cmdinf;
+                                        if(equId.Any())
+                                        {
+                                            sb.AppendLine("=====标识符，精准匹配=====");
+                                            foreach (var cmd in equId)
+                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                        }
+                                    }
+                                    {
+                                        var inId = from cmdinf in cmds where cmdinf.Id.Contains(keyword.ToString()) select cmdinf;
+                                        if(inId.Any())
+                                        {
+                                            sb.AppendLine("=====标识符，模糊普配=====");
+                                            foreach(var cmd in inId)
+                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                        }
+                                    }
+                                    {
+                                        var equAlias = from cmdinf in cmds where cmdinf.Alias.Contains(keyword.ToString()) select cmdinf;
+                                        if(equAlias.Any())
+                                        {
+                                            sb.AppendLine("=====别名=====");
+                                            foreach(var cmd in equAlias)
+                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                        }
+                                    }
+                                    await mp.SendMessageAsync(new(sb.ToString()));
+                                    break;
+                                case "<全局>":
+                                    targetCommand = null;
+                                    hasres = true;
+                                    break;
+                                default:
+                                    var cmdres = from cmdinf in cmds where cmdinf.Id == res1.ToString() select cmdinf;
+                                    if(cmdres.Any())
+                                    {
+                                        targetCommand = cmdres.First().Id;
+                                        hasres = true;
+                                        break;
+                                    }
+                                    else
+                                        goto WrongInput;
+                            }
+                        }
+                    }
+                    try
+                    {
+                        data.GlobalLock.EnterWriteLock();
+                        if(string.IsNullOrWhiteSpace(targetCommand))
+                            data.GlobalBlockRoles.Add(new(){ Target = targetId, TargetType = isGroup ? BlockRoleTargetType.Group : BlockRoleTargetType.User});
+                    }
+                    finally
+                    {
+                        data.GlobalLock.ExitWriteLock();
+                    }
+                    await mp.SendMessageAsync(new($"已经设置了对{(isGroup ? "群" : "用户")}{targetId}的{targetCommand ?? "全局"}禁用"));
+                    return;
+         WrongInput:await mp.SendMessageAsync(new("无法解析的输入，退出......"));
+                    return;
+                }
+                ).Commands
         ];
 }

@@ -29,7 +29,10 @@ HostApplicationBuilder builder = new();
 
 ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
 
-List<Plugin> plugins = [new AdminPlugin(data, factory)];
+// 在此处声明是为了能让它扔到内部插件的初始化函数里。
+List<CommandHelper> commands = [];
+
+List<Plugin> plugins = [new AdminPlugin(data, factory, commands)];
 
 if (!Directory.Exists("plugins"))
     Directory.CreateDirectory("plugins");
@@ -88,7 +91,6 @@ foreach (var plugindir in Directory.EnumerateDirectories("plugins"))
     }
 }
 
-List<CommandHelper> commands = [];
 foreach (var plugin in plugins)
 {
     Console.WriteLine($"加载插件{plugin.PluginName}");
