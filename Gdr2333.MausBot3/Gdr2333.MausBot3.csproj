@@ -14,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Gdr2333.MausBot3.InternalPlugins\Gdr2333.MausBot3.InternalPlugins.csproj" />
     <ProjectReference Include="..\Gdr2333.MausBot3.PluginSdk\Gdr2333.MausBot3.PluginSdk.csproj" />
   </ItemGroup>
 
@@ -22,6 +21,10 @@
     <None Update="Config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="InternalPlugins\" />
   </ItemGroup>
 
 </Project>
