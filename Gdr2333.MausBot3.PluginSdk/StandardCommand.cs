@@ -62,7 +62,7 @@ public class StandardCommand(
     /// <param name="alias">指令别名列表</param>
     public void SetRealAlias(string prompt, string[] alias)
     {
-        var tmp = Array.ConvertAll(alias, cmd => new Regex(string.Format(CommandFormatRegex, prompt, cmd)));
+        var tmp = Array.ConvertAll(alias, cmd => new Regex(string.Format(CommandFormatRegex, prompt, cmd), RegexOptions.Compiled));
         try
         {
             _commandRegexesRWLck.EnterWriteLock();

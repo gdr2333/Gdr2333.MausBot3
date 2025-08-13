@@ -215,7 +215,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     {
                         data.GlobalLock.EnterWriteLock();
                         if(string.IsNullOrWhiteSpace(targetCommand))
-                            data.GlobalBlockRoles.Add(new(){ Target = targetId, TargetType = isGroup ? BlockRoleTargetType.Group : BlockRoleTargetType.User});
+                            data.GlobalBlockRoles.Add(new(){ TargetId = targetId, TargetType = isGroup ? BlockRoleTargetType.Group : BlockRoleTargetType.User});
                     }
                     finally
                     {
@@ -225,7 +225,77 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     return;
          WrongInput:await mp.SendMessageAsync(new("无法解析的输入，退出......"));
                     return;
+                }, null, null, 0, false, true).Commands,
+            new StandardCommand(
+                "全局黑名单列表",
+                [],
+                "显示当前的全局黑名单。用法：{命令前缀}全局黑名单列表[可选：页数]",
+                "^{0}{1}\\s*(\\d+)?$",
+                async (c, e) =>
+                {
+                    int page = 1;
+                    int totalPage;
+                    var rs = Regex.Match(e.Message.ToString(), "\\d+");
+                    if(rs.Success)
+                        page = int.Parse(rs.Value);
+                    try
+                    {
+                        data.GlobalLock.EnterReadLock();
+                        totalPage = data.GlobalBlockRoles.Count / 100 + (data.GlobalBlockRoles.Count % 100 == 0 ? 0 : 1);
+                        if(page > totalPage || page < 0)
+                        {
+                            await c.SendMessageAsync(e, new($"页面不存在！当前只有{totalPage}页。"));
+                            return;
+                        }
+                        StringBuilder sb = new($"=====第{page}页，共{totalPage}页=====");
+                        for(int i = (page - 1) * 100; i < int.Min(page * 100, data.CommandBlockRoles.Count); i++)
+                            sb.AppendLine($"{data.GlobalBlockRoles[i].TargetType switch{
+                                 BlockRoleTargetType.Group => "群",
+                                 BlockRoleTargetType.User => "用户",
+                                 _ => ""
+                            }}{data.GlobalBlockRoles[i].TargetId}");
+                        await c.SendMessageAsync(e, new(sb.ToString()));
+                    }
+                    finally
+                    {
+                        data.GlobalLock.ExitReadLock();
+                    }
+                }, null, 0, false, false),
+            new StandardCommand(
+                "指令黑名单列表",
+                [],
+                "显示当前的指令黑名单。用法：{命令前缀}指令黑名单列表{三选一：[命令={命令限定名称}]，[用户={用户ID}]。[群={群号}]}",
+                "^{0}{1}\\s+((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))$",
+                async (c, e) =>
+                {
+                    var rs = Regex.Match(e.Message.ToString(), "((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))");
+                    var cmd = rs.Groups["cmdId"].Value;
+                    var uid = string.IsNullOrEmpty(rs.Groups["userId"].Value) ? (int?)null : int.Parse(rs.Groups["userId"].Value);
+                    var gid = string.IsNullOrEmpty(rs.Groups["groupId"].Value) ? (int?)null : int.Parse(rs.Groups["groupId"].Value);
+                    StringBuilder sb = new();
+                    try
+                    {
+                        data.GlobalLock.EnterReadLock();
+                        foreach(var role in data.CommandBlockRoles)
+                            foreach(var target in role.Value)
+                                if(string.IsNullOrEmpty(cmd)
+                                    || role.Key == cmd
+                                    || !uid.HasValue
+                                    || (target.TargetType == BlockRoleTargetType.User && target.TargetId == uid)
+                                    || !gid.HasValue
+                                    || (target.TargetType == BlockRoleTargetType.Group && target.TargetId == gid))
+                                    sb.AppendLine($"指令{role.Key}，{target.TargetType switch{
+                                        BlockRoleTargetType.Group => "群",
+                                        BlockRoleTargetType.User => "用户",
+                                        _ => ""
+                                    }}{target.TargetId}");
+                    }
+                    finally
+                    {
+                        data.GlobalLock.ExitReadLock();
+                    }
+                    await c.SendMessageAsync(e, new(sb.ToString()));
                 }
-                ).Commands
+                )
         ];
 }

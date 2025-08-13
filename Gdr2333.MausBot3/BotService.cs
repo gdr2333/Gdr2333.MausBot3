@@ -29,11 +29,11 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                     switch (role.TargetType)
                     {
                         case BlockRoleTargetType.Group:
-                            if (gid.HasValue && gid.Value == role.Target)
+                            if (gid.HasValue && gid.Value == role.TargetId)
                                 return;
                             break;
                         case BlockRoleTargetType.User:
-                            if (uid.HasValue && uid.Value == role.Target)
+                            if (uid.HasValue && uid.Value == role.TargetId)
                                 return;
                             break;
                     }
@@ -50,11 +50,11 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                             switch (role.TargetType)
                             {
                                 case BlockRoleTargetType.Group:
-                                    if (gid.HasValue && gid.Value == role.Target)
+                                    if (gid.HasValue && gid.Value == role.TargetId)
                                         goto NotThis;
                                     break;
                                 case BlockRoleTargetType.User:
-                                    if (uid.HasValue && uid.Value == role.Target)
+                                    if (uid.HasValue && uid.Value == role.TargetId)
                                         goto NotThis;
                                     break;
                             }

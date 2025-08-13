@@ -7,7 +7,7 @@ public struct BlockRole
 {
     public required BlockRoleTargetType TargetType { get; set; }
 
-    public required long Target { get; set; }
+    public required long TargetId { get; set; }
 }
 
 public enum BlockRoleTargetType
