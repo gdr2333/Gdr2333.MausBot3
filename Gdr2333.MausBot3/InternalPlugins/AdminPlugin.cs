@@ -85,8 +85,8 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     Random.Shared.NextBytes(buf);
                     var capcha = Convert.ToHexString(buf);
                     _logger.LogInformation($"管理员验证码是{capcha}");
-                    var capchaInput = (await mp.ReadMessageAsync(ct)).ToString();
                     await mp.SendMessageAsync(new([new TextPart($"用户{se.UserId}，请输入验证码：")]));
+                    var capchaInput = (await mp.ReadMessageAsync(ct)).ToString();
                     if(capchaInput == capcha)
                     {
                         try
