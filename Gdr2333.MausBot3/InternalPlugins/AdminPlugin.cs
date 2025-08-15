@@ -31,11 +31,12 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         target = at.UserId;
                     else
                         target = long.Parse(m.Message.ToString().Split(' ')[^1]);
+                    string res = "";
                     try
                     {
                         data.GlobalLock.EnterUpgradeableReadLock();
                         if(data.Admins.Contains(target))
-                            await c.SendMessageAsync(m, new([new TextPart($"{target}已经是管理员了！")]));
+                            res = $"{target}已经是管理员了！";
                         else
                         {
                             try
@@ -48,13 +49,14 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                             {
                                 data.GlobalLock.ExitWriteLock();
                             }
-                            await c.SendMessageAsync(m, new([new TextPart($"添加了{target}到管理员列表")]));
+                            res = $"添加了{target}到管理员列表";
                         }
                     }
                     finally
                     {
                         data.GlobalLock.ExitUpgradeableReadLock();
                     }
+                    await c.SendMessageAsync(m, new(res));
                 },
                 null, 10, true),
             .. new CommandEx(
@@ -113,16 +115,16 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     bool isGroup;
                     long targetId;
                     string? targetCommand = null;
-                    var rs = Regex.Match(se.Message.ToString(), "(群|用户)\\s*(\\d+)\\s*(\\S*)$");
+                    var rs = Regex.Match(se.Message.ToString(), "(?<targetType>群|用户)\\s*(?<targetId>\\d+)\\s*(?<targetCommand>\\S*)$");
                     if(rs.Success)
                     {
-                        isGroup = rs.Groups[0].Value == "群";
-                        if(!long.TryParse(rs.Groups[1].Value, out targetId))
+                        isGroup = rs.Groups["targetType"].Value == "群";
+                        if(!long.TryParse(rs.Groups["targetId"].Value, out targetId))
                         {
                             await mp.SendMessageAsync(new($"无法解析的{(isGroup ? "群" : "用户")}"), ct);
                             return;
                         }
-                        targetCommand = rs.Groups[2].Value;
+                        targetCommand = rs.Groups["targetCommand"].Value;
                     }
                     else
                     {
@@ -237,6 +239,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     int page = 1;
                     int totalPage;
                     var rs = Regex.Match(e.Message.ToString(), "\\d+");
+                    string r = "";
                     if(rs.Success)
                         page = int.Parse(rs.Value);
                     try
@@ -245,22 +248,23 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         totalPage = data.GlobalBlockRoles.Count / 100 + (data.GlobalBlockRoles.Count % 100 == 0 ? 0 : 1);
                         if(page > totalPage || page < 0)
                         {
-                            await c.SendMessageAsync(e, new($"页面不存在！当前只有{totalPage}页。"));
+                            r = $"页面不存在！当前只有{totalPage}页。";
                             return;
                         }
                         StringBuilder sb = new($"=====第{page}页，共{totalPage}页=====");
-                        for(int i = (page - 1) * 100; i < int.Min(page * 100, data.CommandBlockRoles.Count); i++)
+                        for(int i = (page - 1) * 100; i < int.Min(page * 100, data.GlobalBlockRoles.Count); i++)
                             sb.AppendLine($"{data.GlobalBlockRoles[i].TargetType switch{
                                  BlockRoleTargetType.Group => "群",
                                  BlockRoleTargetType.User => "用户",
                                  _ => ""
                             }}{data.GlobalBlockRoles[i].TargetId}");
-                        await c.SendMessageAsync(e, new(sb.ToString()));
+                        r = sb.ToString();
                     }
                     finally
                     {
                         data.GlobalLock.ExitReadLock();
                     }
+                    await c.SendMessageAsync(e, new(r));
                 }, null, 0, false, true),
             new StandardCommand(
                 "指令黑名单列表",
