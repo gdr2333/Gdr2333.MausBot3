@@ -251,7 +251,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                             r = $"页面不存在！当前只有{totalPage}页。";
                             return;
                         }
-                        StringBuilder sb = new($"=====第{page}页，共{totalPage}页=====");
+                        StringBuilder sb = new($"=====第{page}页，共{totalPage}页=====\n");
                         for(int i = (page - 1) * 100; i < int.Min(page * 100, data.GlobalBlockRoles.Count); i++)
                             sb.AppendLine($"{data.GlobalBlockRoles[i].TargetType switch{
                                  BlockRoleTargetType.Group => "群",
