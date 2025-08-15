@@ -91,13 +91,13 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         {
                             data.GlobalLock.EnterWriteLock();
                             data.Admins.Add(se.UserId);
+                            data.Save();
                         }
                         finally
                         {
                             data.GlobalLock.ExitWriteLock();
                         }
                         await mp.SendMessageAsync(new([new TextPart("添加管理员成功！")]), ct);
-                        data.Save();
                     }
                     else
                         await mp.SendMessageAsync(new([new TextPart("管理员验证码错误！")]), ct);
@@ -216,6 +216,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         data.GlobalLock.EnterWriteLock();
                         if(string.IsNullOrWhiteSpace(targetCommand))
                             data.GlobalBlockRoles.Add(new(){ TargetId = targetId, TargetType = isGroup ? BlockRoleTargetType.Group : BlockRoleTargetType.User});
+                        data.Save();
                     }
                     finally
                     {
@@ -260,12 +261,12 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     {
                         data.GlobalLock.ExitReadLock();
                     }
-                }, null, 0, false, false),
+                }, null, 0, false, true),
             new StandardCommand(
                 "指令黑名单列表",
                 [],
                 "显示当前的指令黑名单。用法：{命令前缀}指令黑名单列表{三选一：[命令={命令限定名称}]，[用户={用户ID}]。[群={群号}]}",
-                "^{0}{1}\\s+((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))$",
+                "^{0}{1}\\s+((((?:cmd|command|命令)=(?:\\S+))|((?:user|uid|用户)=(?:\\d+))|((?:group|gid|群)=(?:\\d+))))$",
                 async (c, e) =>
                 {
                     var rs = Regex.Match(e.Message.ToString(), "((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))");
@@ -295,7 +296,59 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         data.GlobalLock.ExitReadLock();
                     }
                     await c.SendMessageAsync(e, new(sb.ToString()));
-                }
-                )
+                }, null, 0, false, true),
+            new StandardCommand(
+                "删除黑名单",
+                [],
+                "从黑名单中移除指定条目。用法：{命令前缀}删除黑名单 [指令ID 或 \"全局\"] [(用户/群)ID 或 \"所有\"]。例：删除黑名单 全局 用户114514",
+                "^{0}{1}\\s+(?:全局|.+)\\s+(?:(?:(?:用户|群)\\d+)|所有)$",
+                async (c, e) =>
+                {
+                    var res = Regex.Match(e.Message.ToString(),"(?:全局|(?<cmdId>.+))\\s+(?:(?:(?<targetType>用户|群)(?<targetId>\\d+))|所有)$");
+                    var cid = res.Groups["cmdId"].Value;
+                    var tid = string.IsNullOrEmpty(res.Groups["targetId"].Value) ? long.Parse(res.Groups["targetId"].Value) : (long?)null;
+                    var tt = res.Groups["targetType"].Value switch
+                    {
+                        "用户" => BlockRoleTargetType.User,
+                        "群" => BlockRoleTargetType.Group,
+                        _ => (BlockRoleTargetType?)null
+                    };
+                    int removed = 0;
+                    bool badCommandName = !string.IsNullOrEmpty(cid);
+                    try
+                    {
+                        data.GlobalLock.EnterWriteLock();
+                        if(!string.IsNullOrEmpty(cid))
+                            if(tt.HasValue && tid.HasValue)
+                                removed = data.GlobalBlockRoles.RemoveAll(r => r.TargetType == tt && r.TargetId == tid);
+                            else
+                            {
+                                removed = data.GlobalBlockRoles.Count;
+                                data.CommandBlockRoles.Clear();
+                            }
+                        else if(data.CommandBlockRoles.TryGetValue(cid, out var rules))
+                        {
+                            badCommandName = false;
+                            if(tt.HasValue && tid.HasValue)
+                                removed = rules.RemoveAll(r => r.TargetType == tt && r.TargetId == tid);
+                            else
+                            {
+                                removed = rules.Count;
+                                data.CommandBlockRoles.Remove(cid);
+                            }
+                        }
+                        data.Save();
+                    }
+                    finally
+                    {
+                        data.GlobalLock?.ExitWriteLock();
+                    }
+                    if(badCommandName)
+                        await c.SendMessageAsync(e, new("指令不存在！"));
+                    else if(removed == 0)
+                        await c.SendMessageAsync(e, new("找不到符合条件的规则！"));
+                    else
+                        await c.SendMessageAsync(e, new($"成功移除了{removed}条规则。"));
+                }, null, 0, false, true)
         ];
 }
