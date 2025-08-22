@@ -353,6 +353,21 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         await c.SendMessageAsync(e, new("找不到符合条件的规则！"));
                     else
                         await c.SendMessageAsync(e, new($"成功移除了{removed}条规则。"));
-                }, null, 0, false, true)
+                }, null, 0, false, true),
+            new StandardCommand(
+                "添加别名",
+                ["alias"],
+                "添加指定命令的别名。用法：{命令前缀}添加别名 [命令ID] \"[别名]\"",
+                "^{0}{1}\\s+.+\\s+\".*\"$",
+                (c, e) => 
+                {
+                    var rs = Regex.Match(e.Message.ToString(), "\\s+(?<commandId>.+)\\s+\"(?<newAlias>.*)\"$");
+                    string res = "";
+                    try
+                    {
+                        data.GlobalLock.EnterUpgradeableReadLock();
+                        if(data)
+                    }
+                })
         ];
 }
