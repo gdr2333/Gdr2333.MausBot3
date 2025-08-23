@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Gdr2333.BotLib.OnebotV11" Version="1.0.0-rc0" />
+    <PackageReference Include="Gdr2333.BotLib.OnebotV11" Version="1.0.0-rc1" />
   </ItemGroup>
 
 </Project>
