@@ -115,49 +115,65 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                     (string Id, string Name, string[] Alias)[] cmds = Array.ConvertAll<CommandHelper, (string Id, string Name, string[] Alias)>([..commands], (cmd) => (cmd.Id, cmd.Command.CommandName, cmd.Command.CommandAlias));
                     var keyword = m.Groups["keyword"];
                     StringBuilder sb = new();
+                    List<string> searched = [];
                     {
                         var equName = from cmdinf in cmds where cmdinf.Name == keyword.ToString() select cmdinf;
-                            if(equName.Any())
+                        if(equName.Any())
+                        {
+                            sb.AppendLine("=====名称，精准匹配=====");
+                            foreach(var cmd in equName)
                             {
-                                sb.AppendLine("=====名称，精准匹配=====");
-                                foreach(var cmd in equName)
-                                    sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                searched.Add(cmd.Id);
                             }
+                        }
                     }
                     {
-                        var inName = from cmdinf in cmds where cmdinf.Name.Contains(keyword.ToString()) select cmdinf;
+                        var inName = from cmdinf in cmds where cmdinf.Name.Contains(keyword.ToString()) && !searched.Contains(cmdinf.Id) select cmdinf;
                         if(inName.Any())
                         {
                             sb.AppendLine("=====名称，模糊匹配=====");
                             foreach(var cmd in inName)
+                            {
                                 sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                searched.Add(cmd.Id);
+                            }
                         }
                     }
                     {
-                        var equId = from cmdinf in cmds where cmdinf.Id == keyword.ToString() select cmdinf;
+                        var equId = from cmdinf in cmds where cmdinf.Id == keyword.ToString() && !searched.Contains(cmdinf.Id) select cmdinf;
                         if(equId.Any())
                         {
                             sb.AppendLine("=====标识符，精准匹配=====");
                             foreach (var cmd in equId)
+                            {
                                 sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                searched.Add(cmd.Id);
+                            }
                         }
                     }
                     {
-                        var inId = from cmdinf in cmds where cmdinf.Id.Contains(keyword.ToString()) select cmdinf;
+                        var inId = from cmdinf in cmds where cmdinf.Id.Contains(keyword.ToString()) && !searched.Contains(cmdinf.Id) select cmdinf;
                         if(inId.Any())
                         {
                             sb.AppendLine("=====标识符，模糊匹配=====");
                             foreach(var cmd in inId)
+                            {
                                 sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                searched.Add(cmd.Id);
+                            }
                         }
                     }
                     {
-                        var equAlias = from cmdinf in cmds where cmdinf.Alias.Contains(keyword.ToString()) select cmdinf;
+                        var equAlias = from cmdinf in cmds where cmdinf.Alias.Contains(keyword.ToString()) && !searched.Contains(cmdinf.Id) select cmdinf;
                         if(equAlias.Any())
                         {
                             sb.AppendLine("=====别名=====");
                             foreach(var cmd in equAlias)
+                            {
                                 sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                                searched.Add(cmd.Id);
+                            }
                         }
                     }
                     await c.SendMessageAsync(e, new(sb.ToString()));
