@@ -109,7 +109,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                 "搜索指令",
                 [],
                 "搜索符合条件的指令。用法：{指令前缀}搜索指令[关键词]",
-                "^{0}{1}(?<keyword>.*)$",
+                "^{0}{1}\\s?(?<keyword>.*)$",
                 async (c, e, m) =>
                 {
                     (string Id, string Name, string[] Alias)[] cmds = Array.ConvertAll<CommandHelper, (string Id, string Name, string[] Alias)>([..commands], (cmd) => (cmd.Id, cmd.Command.CommandName, cmd.Command.CommandAlias));
