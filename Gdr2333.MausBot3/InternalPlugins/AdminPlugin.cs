@@ -146,7 +146,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         var inId = from cmdinf in cmds where cmdinf.Id.Contains(keyword.ToString()) select cmdinf;
                         if(inId.Any())
                         {
-                            sb.AppendLine("=====标识符，模糊普配=====");
+                            sb.AppendLine("=====标识符，模糊匹配=====");
                             foreach(var cmd in inId)
                                 sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
                         }
