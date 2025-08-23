@@ -24,7 +24,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                 [],
                 "添加指定用户到管理员组。用法：{命令前缀}添加管理员 [管理员QQ号|@新管理员]",
                 "^{0}{1} +@?\\d+$",
-                async (c, m) =>
+                async (c, m, fuck0) =>
                 {
                     long target;
                     if(m.Message[1] is AtPart at)
@@ -105,6 +105,63 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         await mp.SendMessageAsync(new([new TextPart("管理员验证码错误！")]), ct);
                 }
                 ).Commands,
+            new StandardCommand(
+                "搜索指令",
+                [],
+                "搜索符合条件的指令。用法：{指令前缀}搜索指令[关键词]",
+                "^{0}{1}(?<keyword>.*)$",
+                async (c, e, m) =>
+                {
+                    (string Id, string Name, string[] Alias)[] cmds = Array.ConvertAll<CommandHelper, (string Id, string Name, string[] Alias)>([..commands], (cmd) => (cmd.Id, cmd.Command.CommandName, cmd.Command.CommandAlias));
+                    var keyword = m.Groups["keyword"];
+                    StringBuilder sb = new();
+                    {
+                        var equName = from cmdinf in cmds where cmdinf.Name == keyword.ToString() select cmdinf;
+                            if(equName.Any())
+                            {
+                                sb.AppendLine("=====名称，精准匹配=====");
+                                foreach(var cmd in equName)
+                                    sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                            }
+                    }
+                    {
+                        var inName = from cmdinf in cmds where cmdinf.Name.Contains(keyword.ToString()) select cmdinf;
+                        if(inName.Any())
+                        {
+                            sb.AppendLine("=====名称，模糊匹配=====");
+                            foreach(var cmd in inName)
+                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                        }
+                    }
+                    {
+                        var equId = from cmdinf in cmds where cmdinf.Id == keyword.ToString() select cmdinf;
+                        if(equId.Any())
+                        {
+                            sb.AppendLine("=====标识符，精准匹配=====");
+                            foreach (var cmd in equId)
+                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                        }
+                    }
+                    {
+                        var inId = from cmdinf in cmds where cmdinf.Id.Contains(keyword.ToString()) select cmdinf;
+                        if(inId.Any())
+                        {
+                            sb.AppendLine("=====标识符，模糊普配=====");
+                            foreach(var cmd in inId)
+                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                        }
+                    }
+                    {
+                        var equAlias = from cmdinf in cmds where cmdinf.Alias.Contains(keyword.ToString()) select cmdinf;
+                        if(equAlias.Any())
+                        {
+                            sb.AppendLine("=====别名=====");
+                            foreach(var cmd in equAlias)
+                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
+                        }
+                    }
+                    await c.SendMessageAsync(e, new(sb.ToString()));
+                }),
             .. new CommandEx(
                 "添加黑名单",
                 [],
@@ -136,8 +193,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         await mp.SendMessageAsync(new($"你想将屏蔽规则用于什么{(isGroup ? "群" : "用户")}？请输入{(isGroup ? "群" : "用户")}的ID"), ct);
                         if(!long.TryParse((await mp.ReadMessageAsync(ct)).ToString(), out targetId))
                             goto WrongInput;
-                        await mp.SendMessageAsync(new("你想将屏蔽规则用于什么指令？请输入指令的ID。输入\"<搜索>\"来寻找可以被屏蔽的指令，输入\"<全局>\"来使该规则全局启用。"), ct);
-                        // 在用户输入内容的时候，让我们计算指令列表
+                        await mp.SendMessageAsync(new("你想将屏蔽规则用于什么指令？请输入指令的ID，输入\"<全局>\"来使该规则全局启用。"), ct);
                         (string Id, string Name, string[] Alias)[] cmds = Array.ConvertAll<CommandHelper, (string Id, string Name, string[] Alias)>([..commands], (cmd) => (cmd.Id, cmd.Command.CommandName, cmd.Command.CommandAlias));
                         bool hasres = false;
                         while(!hasres)
@@ -145,57 +201,6 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                             var res1 = await mp.ReadMessageAsync(ct);
                             switch(res1.ToString())
                             {
-                                case "<搜索>":
-                                    await mp.SendMessageAsync(new("请输入你要搜索的关键词："), ct);
-                                    var keyword = await mp.ReadMessageAsync(ct);
-                                    StringBuilder sb = new();
-                                    {
-                                        var equName = from cmdinf in cmds where cmdinf.Name == keyword.ToString() select cmdinf;
-                                        if(equName.Any())
-                                        {
-                                            sb.AppendLine("=====名称，精准匹配=====");
-                                            foreach(var cmd in equName)
-                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
-                                        }
-                                    }
-                                    {
-                                        var inName = from cmdinf in cmds where cmdinf.Name.Contains(keyword.ToString()) select cmdinf;
-                                        if(inName.Any())
-                                        {
-                                            sb.AppendLine("=====名称，模糊匹配=====");
-                                            foreach(var cmd in inName)
-                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
-                                        }
-                                    }
-                                    {
-                                        var equId = from cmdinf in cmds where cmdinf.Id == keyword.ToString() select cmdinf;
-                                        if(equId.Any())
-                                        {
-                                            sb.AppendLine("=====标识符，精准匹配=====");
-                                            foreach (var cmd in equId)
-                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
-                                        }
-                                    }
-                                    {
-                                        var inId = from cmdinf in cmds where cmdinf.Id.Contains(keyword.ToString()) select cmdinf;
-                                        if(inId.Any())
-                                        {
-                                            sb.AppendLine("=====标识符，模糊普配=====");
-                                            foreach(var cmd in inId)
-                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
-                                        }
-                                    }
-                                    {
-                                        var equAlias = from cmdinf in cmds where cmdinf.Alias.Contains(keyword.ToString()) select cmdinf;
-                                        if(equAlias.Any())
-                                        {
-                                            sb.AppendLine("=====别名=====");
-                                            foreach(var cmd in equAlias)
-                                                sb.AppendLine($"{cmd.Name}，全称为{cmd.Id}");
-                                        }
-                                    }
-                                    await mp.SendMessageAsync(new(sb.ToString()));
-                                    break;
                                 case "<全局>":
                                     targetCommand = null;
                                     hasres = true;
@@ -233,15 +238,14 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                 "全局黑名单列表",
                 [],
                 "显示当前的全局黑名单。用法：{命令前缀}全局黑名单列表[可选：页数]",
-                "^{0}{1}\\s*(\\d+)?$",
-                async (c, e) =>
+                "^{0}{1}\\s*(?<page>\\d+)?$",
+                async (c, e, m) =>
                 {
-                    int page = 1;
+                    // 奇怪的特性：if的括号里放out var的话后者的作用域并没有局限在if内，所以下面两行代码是合法的
+                    if(!int.TryParse(m.Groups["page"].Value, out var page))
+                        page = 1;
                     int totalPage;
-                    var rs = Regex.Match(e.Message.ToString(), "\\d+");
                     string r = "";
-                    if(rs.Success)
-                        page = int.Parse(rs.Value);
                     try
                     {
                         data.GlobalLock.EnterReadLock();
@@ -270,13 +274,12 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                 "指令黑名单列表",
                 [],
                 "显示当前的指令黑名单。用法：{命令前缀}指令黑名单列表{三选一：[命令={命令限定名称}]，[用户={用户ID}]。[群={群号}]}",
-                "^{0}{1}\\s+((((?:cmd|command|命令)=(?:\\S+))|((?:user|uid|用户)=(?:\\d+))|((?:group|gid|群)=(?:\\d+))))$",
-                async (c, e) =>
+                "^{0}{1}\\s?((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))$",
+                async (c, e, m) =>
                 {
-                    var rs = Regex.Match(e.Message.ToString(), "((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))");
-                    var cmd = rs.Groups["cmdId"].Value;
-                    var uid = string.IsNullOrEmpty(rs.Groups["userId"].Value) ? (int?)null : int.Parse(rs.Groups["userId"].Value);
-                    var gid = string.IsNullOrEmpty(rs.Groups["groupId"].Value) ? (int?)null : int.Parse(rs.Groups["groupId"].Value);
+                    var cmd = m.Groups["cmdId"].Value;
+                    var uid = string.IsNullOrEmpty(m.Groups["userId"].Value) ? (int?)null : int.Parse(m.Groups["userId"].Value);
+                    var gid = string.IsNullOrEmpty(m.Groups["groupId"].Value) ? (int?)null : int.Parse(m.Groups["groupId"].Value);
                     StringBuilder sb = new();
                     try
                     {
@@ -305,10 +308,9 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                 "删除黑名单",
                 [],
                 "从黑名单中移除指定条目。用法：{命令前缀}删除黑名单 [指令ID 或 \"全局\"] [(用户/群)ID 或 \"所有\"]。例：删除黑名单 全局 用户114514",
-                "^{0}{1}\\s+(?:全局|.+)\\s+(?:(?:(?:用户|群)\\d+)|所有)$",
-                async (c, e) =>
+                "^{0}{1}\\s+(?:全局|(?<cmdId>.+))\\s+(?:(?:(?<targetType>用户|群)(?<targetId>\\d+))|所有)$",
+                async (c, e, res) =>
                 {
-                    var res = Regex.Match(e.Message.ToString(),"(?:全局|(?<cmdId>.+))\\s+(?:(?:(?<targetType>用户|群)(?<targetId>\\d+))|所有)$");
                     var cid = res.Groups["cmdId"].Value;
                     var tid = string.IsNullOrEmpty(res.Groups["targetId"].Value) ? long.Parse(res.Groups["targetId"].Value) : (long?)null;
                     var tt = res.Groups["targetType"].Value switch
@@ -358,16 +360,28 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                 "添加别名",
                 ["alias"],
                 "添加指定命令的别名。用法：{命令前缀}添加别名 [命令ID] \"[别名]\"",
-                "^{0}{1}\\s+.+\\s+\".*\"$",
-                (c, e) => 
+                "^{0}{1}\\s+(?<commandId>.+)\\s+\"(?<newAlias>.+)\"$",
+                async (c, e, rs) =>
                 {
-                    var rs = Regex.Match(e.Message.ToString(), "\\s+(?<commandId>.+)\\s+\"(?<newAlias>.*)\"$");
-                    string res = "";
-                    try
+                    var cid = rs.Groups["commandId"].Value;
+                    var alias = rs.Groups["newAlias"].Value;
+                    if(Array.Exists([..commands], cmd => cmd.Id == cid))
                     {
-                        data.GlobalLock.EnterUpgradeableReadLock();
-                        if(data)
+                        try
+                        {
+                            data.GlobalLock.EnterWriteLock();
+                            if(!data.CommandAliases.ContainsKey(cid))
+                                data.CommandAliases.Add(cid, new(){ UseDefaultAlias = true, UseDrfaultName = true, NewAliases = [] });
+                            data.CommandAliases[cid].NewAliases.Add(alias);
+                        }
+                        finally
+                        {
+                            data.GlobalLock.ExitWriteLock();
+                        }
+                        await c.SendMessageAsync(e, new($"已经添加了命令{cid}的别名{alias}"));
                     }
+                    else
+                        await c.SendMessageAsync(e, new("指令不存在"));
                 })
         ];
 }

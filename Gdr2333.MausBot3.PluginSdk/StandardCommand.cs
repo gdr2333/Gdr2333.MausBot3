@@ -24,7 +24,7 @@ public class StandardCommand(
     string[] alias,
     string description,
     string regexFormat,
-    Action<OnebotV11ClientBase, MessageReceivedEventArgsBase> handler,
+    Action<OnebotV11ClientBase, MessageReceivedEventArgsBase, Match> handler,
     Func<MessageReceivedEventArgsBase, bool>? extraCheck = null,
     sbyte priority = 0,
     bool exclusive = false,
@@ -75,12 +75,24 @@ public class StandardCommand(
     }
 
     /// <inheritdoc/>
-    public override bool CheckHandle(MessageReceivedEventArgsBase message)
+    public override bool CheckHandle(MessageReceivedEventArgsBase message) =>
+        throw new InvalidOperationException($"文本命令类不可以调用{nameof(CheckHandle)}，请改为使用{nameof(CheckHandleEx)}。");
+
+    // 我hack了你的IDE（不是）
+    /// <inheritdoc cref="M:Gdr2333.MausBot3.PluginSdk.CommandBase`1.CheckHandle(`0)"/>
+    public Match? CheckHandleEx(MessageReceivedEventArgsBase message)
     {
+        var msg = message.Message.ToString();
         try
         {
             _commandRegexesRWLck.EnterReadLock();
-            return Array.Exists(_commandRegexes, regex => regex.IsMatch(message.Message.ToString())) && (extraCheck?.Invoke(message) ?? true);
+            foreach(var regex in _commandRegexes)
+            {
+                var res = regex.Match(msg);
+                if (res.Success && (extraCheck?.Invoke(message) ?? true))
+                    return res;
+            }
+            return null;
         }
         finally
         {
@@ -90,5 +102,8 @@ public class StandardCommand(
 
     /// <inheritdoc/>
     public override void Handle(OnebotV11ClientBase client, MessageReceivedEventArgsBase message) =>
-        handler(client, message);
+        throw new InvalidOperationException($"文本命令类不可以调用{nameof(Handle)}，请改为使用{nameof(HandleEx)}。");
+
+    public void HandleEx(OnebotV11ClientBase client, MessageReceivedEventArgsBase message, Match match) =>
+        handler(client, message, match);
 }

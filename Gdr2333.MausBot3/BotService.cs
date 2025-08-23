@@ -4,6 +4,7 @@
 using Gdr2333.BotLib.OnebotV11.Clients;
 using Gdr2333.BotLib.OnebotV11.Events;
 using Gdr2333.MausBot3.InternalPlugins;
+using Gdr2333.MausBot3.PluginSdk;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -58,7 +59,18 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                                         goto NotThis;
                                     break;
                             }
-                    if (cmd.Command.CheckHandle(e))
+                    if(cmd.Command is StandardCommand stdcmd)
+                    {
+                        var r = stdcmd.CheckHandleEx((MessageReceivedEventArgsBase)e);
+                        if(r != null)
+                        {
+                            logger.LogInformation($"事件被{(cmd.Command.IsExclusiveHandler ? "独占" : "非独占")}命令{cmd.Id}触发。");
+                            Task.Run(() => stdcmd.HandleEx(c, (MessageReceivedEventArgsBase)e, r));
+                            if (cmd.Command.IsExclusiveHandler)
+                                return;
+                        }
+                    }
+                    else if (cmd.Command.CheckHandle(e))
                     {
                         logger.LogInformation($"事件被{(cmd.Command.IsExclusiveHandler ? "独占" : "非独占")}命令{cmd.Id}触发。");
                         Task.Run(() => cmd.Command.Handle(c, e));

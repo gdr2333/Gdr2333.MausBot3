@@ -16,7 +16,7 @@ public class LoaderTest(ILoggerFactory loggerFactory) : Plugin
             [],
             "我这动态加载能用吗？",
             "^{0}{1}$",
-            async (c,e) =>
+            async (c, e, fuck0) =>
             {
                 _logger.LogInformation("DI Works!");
                 await c.SendMessageAsync(e, new($"MausBot3 on CoreCLR {Environment.Version} on {Environment.OSVersion} as PID {Environment.ProcessId}.\nStackTrace:\n{Environment.StackTrace}"));

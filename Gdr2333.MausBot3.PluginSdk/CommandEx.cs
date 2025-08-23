@@ -53,7 +53,7 @@ public class CommandEx
             alias,
             description,
             regexFormat,
-            (c, e) =>
+            (c, e, fuck0) =>
             {
                 var src = new SessionSource(e.BotId, e is IGroupEventArgs ge ? ge.GroupId : -1, e.UserId);
                 var dat = new SessionData(() => sessions.TryRemove(src, out _), (m, ct) => c.SendMessageAsync(e, m, ct));
