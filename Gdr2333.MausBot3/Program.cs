@@ -12,7 +12,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-Console.WriteLine("MausBot3 by df1050 - 0.0.2-alpha0 & MausBot3-PluginSdk 0.0.2-alpha0");
+Console.WriteLine("MausBot3 by df1050 - 0.0.2-alpha1 & MausBot3-PluginSdk 0.0.2-alpha0");
 Console.WriteLine("初始化数据......");
 
 var jsonso = new JsonSerializerOptions() { WriteIndented = true };
@@ -51,7 +51,7 @@ foreach (var plugindir in Directory.EnumerateDirectories("plugins"))
             Console.WriteLine($"正在加载插件自{file}");
             bool havePlugin = false;
             foreach (var type in asm.GetExportedTypes())
-                if (typeof(Plugin).IsAssignableFrom(type))
+                if (typeof(Plugin).IsAssignableFrom(type) && typeof(Plugin).GUID != type.GUID)
                 {
                     havePlugin |= true;
                     Console.WriteLine($"找到插件类型{type}，正在尝试初始化");
