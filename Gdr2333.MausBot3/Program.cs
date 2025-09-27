@@ -9,10 +9,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-Console.WriteLine("MausBot3 by df1050 - 0.0.2-alpha1 & MausBot3-PluginSdk 0.0.2-alpha0");
+Console.WriteLine("MausBot3 by df1050 - 0.0.3-alpha0 & MausBot3-PluginSdk 0.0.2-alpha0");
 Console.WriteLine("初始化数据......");
 
 var jsonso = new JsonSerializerOptions() { WriteIndented = true };
@@ -34,52 +35,32 @@ List<CommandHelper> commands = [];
 
 List<Plugin> plugins = [new AdminPlugin(data, factory, commands)];
 
+List<PluginLoadingContext> asmContexts = [];
+
 if (!Directory.Exists("plugins"))
     Directory.CreateDirectory("plugins");
 
 List<object> DIObjects = [data, factory];
 
 Console.WriteLine("开始搜索插件");
-foreach (var plugindir in Directory.EnumerateDirectories("plugins"))
+foreach (var plugindir in Directory.EnumerateDirectories($"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}plugins"))
 {
     Console.WriteLine($"进入文件夹{plugindir}");
+    var asmContext = new PluginLoadingContext(plugindir);
+    var coAsmContext = new AssemblyLoadContext("TEMP");
     foreach (var file in Directory.EnumerateFiles(plugindir))
     {
         try
         {
-            var asm = Assembly.LoadFrom(file);
-            Console.WriteLine($"正在加载插件自{file}");
-            bool havePlugin = false;
-            foreach (var type in asm.GetExportedTypes())
-                if (typeof(Plugin).IsAssignableFrom(type) && typeof(Plugin).GUID != type.GUID)
-                {
-                    havePlugin |= true;
-                    Console.WriteLine($"找到插件类型{type}，正在尝试初始化");
-                    bool loaded = false;
-                    foreach (var initWay in type.GetConstructors())
-                    {
-                        List<object> para = [];
-                        foreach (var param in initWay.GetParameters())
-                            if (DIObjects.Any(obj => param.ParameterType.IsAssignableFrom(obj.GetType())))
-                                para.Add(DIObjects.Where(obj => param.ParameterType.IsAssignableFrom(obj.GetType())).First());
-                            else
-                                goto TryNext;
-                        var obj = Activator.CreateInstance(type, [.. para]);
-                        if (obj is Plugin plugin)
-                        {
-                            plugins.Add(plugin);
-                            loaded = true;
-                            Console.WriteLine($"初始化了类型{type}，插件ID={plugin.PluginId}");
-                            break;
-                        }
-                    TryNext:;
-                    }
-                    if(!loaded)
-                    {
-                        Console.WriteLine($"无法初始化{type}，继续加载其它类型......");
-                    }
-                }
-            Console.WriteLine($"{file}：检测完成");
+            var asm = coAsmContext.LoadFromAssemblyPath(file);
+            var asmName = new AssemblyName(asm.FullName);
+            // 如果**默认加载的程序集**里面有这个，用默认的版本
+            // 还请插件作者不要瞎更新依赖版本
+            if (!AssemblyLoadContext.Default.Assemblies.Any(asm1 => new AssemblyName(asm1.FullName).Name == asmName.Name))
+            {
+                asmContext.LoadFromAssemblyPath(file);
+                Console.WriteLine($"托管程序集已加载：{asmName}");
+            }
         }
         catch (BadImageFormatException)
         {
@@ -88,6 +69,43 @@ foreach (var plugindir in Directory.EnumerateDirectories("plugins"))
         {
             Console.WriteLine($"{file}已被加载，跳过......");
         }
+    }
+    asmContext.LoadNativeLib(plugindir);
+    bool asmContextHavePlugin = false;
+    foreach (var asm in asmContext.Assemblies)
+        foreach (var type in asm.GetExportedTypes())
+            if (type.IsAssignableTo(typeof(Plugin)) && type.FullName != typeof(Plugin).FullName)
+            {
+                asmContextHavePlugin |= true;
+                Console.WriteLine($"找到插件类型{type}，正在尝试初始化");
+                bool loaded = false;
+                foreach (var initWay in type.GetConstructors())
+                {
+                    List<object> para = [];
+                    foreach (var param in initWay.GetParameters())
+                        if (DIObjects.Any(obj => param.ParameterType.IsAssignableFrom(obj.GetType())))
+                            para.Add(DIObjects.Where(obj => param.ParameterType.IsAssignableFrom(obj.GetType())).First());
+                        else
+                            goto TryNext;
+                    var obj = Activator.CreateInstance(type, [.. para]);
+                    if (obj is Plugin plugin)
+                    {
+                        plugins.Add(plugin);
+                        loaded = true;
+                        Console.WriteLine($"初始化了类型{type}，插件ID={plugin.PluginId}");
+                        break;
+                    }
+                TryNext:;
+                }
+                if (!loaded)
+                {
+                    Console.WriteLine($"无法初始化{type}，继续加载其它类型......");
+                }
+            }
+    if (!asmContextHavePlugin)
+    {
+        Console.WriteLine("警告：文件夹中不包含可识别插件。程序集加载上下文已被销毁。");
+        asmContext.Dispose();
     }
 }
 
