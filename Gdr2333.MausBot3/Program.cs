@@ -47,6 +47,7 @@ foreach (var plugindir in Directory.EnumerateDirectories($"{Environment.CurrentD
 {
     Console.WriteLine($"进入文件夹{plugindir}");
     var asmContext = new PluginLoadingContext(plugindir);
+    // 这个上下文就是用来销毁的。
     var coAsmContext = new AssemblyLoadContext("TEMP");
     foreach (var file in Directory.EnumerateFiles(plugindir))
     {
@@ -107,6 +108,7 @@ foreach (var plugindir in Directory.EnumerateDirectories($"{Environment.CurrentD
         Console.WriteLine("警告：文件夹中不包含可识别插件。程序集加载上下文已被销毁。");
         asmContext.Dispose();
     }
+    coAsmContext.Unload();
 }
 
 foreach (var plugin in plugins)

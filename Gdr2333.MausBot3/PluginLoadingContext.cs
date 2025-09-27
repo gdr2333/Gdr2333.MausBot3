@@ -15,6 +15,7 @@ internal class PluginLoadingContext(string name) : AssemblyLoadContext(name), ID
     {
         foreach (var libHandle in _nativeLibs)
             NativeLibrary.Free(libHandle);
+        Unload();
     }
 
     public void LoadNativeLib(string path)
