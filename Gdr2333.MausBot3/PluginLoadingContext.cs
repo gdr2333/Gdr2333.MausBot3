@@ -7,7 +7,7 @@ using System.Runtime.Loader;
 namespace Gdr2333.MausBot3;
 
 // 傻逼微软，讲个笑话：.NET是一个开源的跨平台技术
-internal class PluginLoadingContext(string name) : AssemblyLoadContext(name), IDisposable
+internal class PluginLoadingContext(string name) : AssemblyLoadContext(name, true), IDisposable
 {
     readonly List<IntPtr> _nativeLibs = [];
 

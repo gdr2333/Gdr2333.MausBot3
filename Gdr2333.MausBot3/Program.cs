@@ -13,7 +13,7 @@ using System.Runtime.Loader;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-Console.WriteLine("MausBot3 by df1050 - 0.0.3-alpha0 & MausBot3-PluginSdk 0.0.2-alpha0");
+Console.WriteLine("MausBot3 by df1050 - 0.0.3-alpha1 & MausBot3-PluginSdk 0.0.2-alpha0");
 Console.WriteLine("初始化数据......");
 
 var jsonso = new JsonSerializerOptions() { WriteIndented = true };
@@ -48,7 +48,7 @@ foreach (var plugindir in Directory.EnumerateDirectories($"{Environment.CurrentD
     Console.WriteLine($"进入文件夹{plugindir}");
     var asmContext = new PluginLoadingContext(plugindir);
     // 这个上下文就是用来销毁的。
-    var coAsmContext = new AssemblyLoadContext("TEMP");
+    var coAsmContext = new AssemblyLoadContext("TEMP", true);
     foreach (var file in Directory.EnumerateFiles(plugindir))
     {
         try
