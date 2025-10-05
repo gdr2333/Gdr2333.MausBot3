@@ -1,6 +1,7 @@
 ﻿// Copyright 2025, df1050 and the Gdr2333.MausBot3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+using System.Reflection;
 using Gdr2333.MausBot3.PluginSdk;
 using Microsoft.Extensions.Logging;
 
@@ -19,7 +20,7 @@ public class LoaderTest(ILoggerFactory loggerFactory) : Plugin
             async (c, e, fuck0) =>
             {
                 _logger.LogInformation("DI Works!");
-                await c.SendMessageAsync(e, new($"MausBot3 on CoreCLR {Environment.Version} on {Environment.OSVersion} as PID {Environment.ProcessId}.\nStackTrace:\n{Environment.StackTrace}"));
+                await c.SendMessageAsync(e, new($"MausBot3 {new AssemblyName(Assembly.GetEntryAssembly()?.FullName).Version} & MausBot3-PluginSdk {new AssemblyName(Assembly.GetAssembly(typeof(CommandBase)).FullName).Version} on CoreCLR {Environment.Version} on {Environment.OSVersion} as PID {Environment.ProcessId}.\nStackTrace:\n{Environment.StackTrace}"));
             }
         )
     ];

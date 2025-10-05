@@ -13,7 +13,7 @@ public class MessagePipe
 {
     internal readonly Channel<Message> ReadChannel = Channel.CreateUnbounded<Message>();
     private readonly Action ResetWatchdog;
-    private Func<Message,CancellationToken, Task> _sender;
+    private readonly Func<Message,CancellationToken, Task> _sender;
 
     internal MessagePipe(Action resetWatchdog, Func<Message, CancellationToken, Task> sender)
     {

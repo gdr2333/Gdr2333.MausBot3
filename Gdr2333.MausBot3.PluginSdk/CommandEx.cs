@@ -78,8 +78,8 @@ public class CommandEx
                 var dat = sessions?[new(e.BotId, e is IGroupEventArgs ge ? ge.GroupId : -1, e.UserId)];
                 if (dat != null)
                 {
-                    dat.SendMessage = (m, ct) => c.SendMessageAsync(e, m, ct);
                     await dat.MessagePipe.ReadChannel.Writer.WriteAsync(e.Message);
+                    dat.ResetWatchdog();
                 }
             },
             (e) => sessions.ContainsKey(new(e.BotId, e is IGroupEventArgs ge ? ge.GroupId : -1, e.UserId)) && (stillExtraCheck?.Invoke(e) ?? true),
