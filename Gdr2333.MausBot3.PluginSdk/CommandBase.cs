@@ -58,5 +58,5 @@ public abstract class CommandBase
     /// </summary>
     /// <param name="client">收到消息的客户端</param>
     /// <param name="message">触发指令的消息</param>
-    public abstract void Handle(OnebotV11ClientBase client, OnebotV11EventArgsBase message);
+    public abstract Task Handle(OnebotV11ClientBase client, OnebotV11EventArgsBase message);
 }

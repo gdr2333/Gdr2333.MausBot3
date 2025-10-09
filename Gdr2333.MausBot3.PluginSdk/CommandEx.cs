@@ -53,16 +53,20 @@ public class CommandEx
             alias,
             description,
             regexFormat,
-            (c, e, fuck0) =>
+            async (c, e, fuck0) =>
             {
                 var src = new SessionSource(e.BotId, e is IGroupEventArgs ge ? ge.GroupId : -1, e.UserId);
                 var dat = new SessionData(() => sessions.TryRemove(src, out _), (m, ct) => c.SendMessageAsync(e, m, ct));
                 sessions.TryAdd(src, dat);
-                handler(dat.MessagePipe, e, dat.CancellationTokenSource.Token).ContinueWith((_) =>
+                try
+                {
+                    await handler(dat.MessagePipe, e, dat.CancellationTokenSource.Token);
+                }
+                finally
                 {
                     sessions.TryRemove(src, out dat);
                     dat?.SessionEnded();
-                });
+                }
             },
             e => (!sessions.ContainsKey(new(e.BotId, e is IGroupEventArgs ge ? ge.GroupId : -1, e.UserId))) && (startExtraCheck?.Invoke(e) ?? true),
             priority,

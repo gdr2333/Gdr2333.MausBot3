@@ -29,9 +29,9 @@ public abstract class CommandBase<T> : CommandBase
     /// </summary>
     /// <param name="client">收到消息的客户端</param>
     /// <param name="message">触发指令的消息</param>
-    public abstract void Handle(OnebotV11ClientBase client, T message);
+    public abstract Task Handle(OnebotV11ClientBase client, T message);
 
     /// <inheritdoc/>
-    public override void Handle(OnebotV11ClientBase client, OnebotV11EventArgsBase message) =>
+    public override Task Handle(OnebotV11ClientBase client, OnebotV11EventArgsBase message) =>
         Handle(client, (T)message);
 }

@@ -22,7 +22,7 @@ public class Command<T>(
     string name,
     string[] alias,
     string description,
-    Action<OnebotV11ClientBase, T> handler,
+    Func<OnebotV11ClientBase, T, Task> handler,
     Func<T, bool> check,
     sbyte priority = 0,
     bool exclusive = false,
@@ -53,6 +53,6 @@ public class Command<T>(
         check(message);
 
     /// <inheritdoc/>
-    public override void Handle(OnebotV11ClientBase client, T message) =>
+    public override Task Handle(OnebotV11ClientBase client, T message) =>
         handler(client, message);
 }

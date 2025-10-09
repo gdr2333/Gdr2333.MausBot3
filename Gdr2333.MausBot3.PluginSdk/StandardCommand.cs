@@ -24,7 +24,7 @@ public class StandardCommand(
     string[] alias,
     string description,
     string regexFormat,
-    Action<OnebotV11ClientBase, MessageReceivedEventArgsBase, Match> handler,
+    Func<OnebotV11ClientBase, MessageReceivedEventArgsBase, Match, Task> handler,
     Func<MessageReceivedEventArgsBase, bool>? extraCheck = null,
     sbyte priority = 0,
     bool exclusive = false,
@@ -101,9 +101,9 @@ public class StandardCommand(
     }
 
     /// <inheritdoc/>
-    public override void Handle(OnebotV11ClientBase client, MessageReceivedEventArgsBase message) =>
+    public override Task Handle(OnebotV11ClientBase client, MessageReceivedEventArgsBase message) =>
         throw new InvalidOperationException($"文本命令类不可以调用{nameof(Handle)}，请改为使用{nameof(HandleEx)}。");
 
-    public void HandleEx(OnebotV11ClientBase client, MessageReceivedEventArgsBase message, Match match) =>
+    public Task HandleEx(OnebotV11ClientBase client, MessageReceivedEventArgsBase message, Match match) =>
         handler(client, message, match);
 }
