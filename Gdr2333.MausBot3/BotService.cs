@@ -65,7 +65,11 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                         if(r != null)
                         {
                             logger.LogInformation($"事件被{(cmd.Command.IsExclusiveHandler ? "独占" : "非独占")}命令{cmd.Id}触发。");
-                            Task.Run(() => stdcmd.HandleEx(c, (MessageReceivedEventArgsBase)e, r));
+                            Task.Run(() => stdcmd.HandleEx(c, (MessageReceivedEventArgsBase)e, r)).ContinueWith((r) =>
+                            {
+                                logger.LogError($"在执行命令时出现了未捕捉的异常：{r.Exception}");
+                                c.SendMessageAsync((MessageReceivedEventArgsBase)e, new($"命令执行过程中出现异常（在{cmd.Id}中：{r.Exception?.InnerException?.GetType()?.FullName}:{r?.Exception?.InnerException?.Message}）。命令已终止。"));
+                            });
                             if (cmd.Command.IsExclusiveHandler)
                                 return;
                         }
@@ -73,7 +77,12 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                     else if (cmd.Command.CheckHandle(e))
                     {
                         logger.LogInformation($"事件被{(cmd.Command.IsExclusiveHandler ? "独占" : "非独占")}命令{cmd.Id}触发。");
-                        Task.Run(() => cmd.Command.Handle(c, e));
+                        Task.Run(() => cmd.Command.Handle(c, e)).ContinueWith((r) =>
+                            {
+                                logger.LogError($"在执行命令时出现了未捕捉的异常：{r.Exception}");
+                                if (gid.HasValue || uid.HasValue)
+                                    c.SendMessageAsync(e, new($"命令执行过程中出现异常（在{cmd.Id}中：{r.Exception?.InnerException?.GetType()?.FullName}:{r?.Exception?.InnerException?.Message}）。命令已终止。"));
+                            });
                         if (cmd.Command.IsExclusiveHandler)
                             return;
                     }

@@ -22,7 +22,27 @@ public class LoaderTest(ILoggerFactory loggerFactory) : Plugin
                 _logger.LogInformation("DI Works!");
                 await c.SendMessageAsync(e, new($"MausBot3 {new AssemblyName(Assembly.GetEntryAssembly()?.FullName).Version} & MausBot3-PluginSdk {new AssemblyName(Assembly.GetAssembly(typeof(CommandBase)).FullName).Version} on CoreCLR {Environment.Version} on {Environment.OSVersion} as PID {Environment.ProcessId}.\nStackTrace:\n{Environment.StackTrace}"));
             }
-        )
+        ),
+        new StandardCommand(
+            "mb3ldr-exception",
+            [],
+            "我要是引发一个异常会发生什么？",
+            "^{0}{1}$",
+            async (c, e, fuck0) =>
+            {
+                throw new InvalidOperationException("Manual triggered. For testing use only.");
+            }
+        ),
+        .. new CommandEx(
+            "mb3ldr-exception1",
+            [],
+            "我要是引发一个异常会发生什么？(CommandEx版)",
+            "^{0}{1}$",
+            async (mp, e, ct) =>
+            {
+                throw new InvalidOperationException("Manual triggered. For testing use only.");
+            }
+        ).Commands
     ];
 
     public override string PluginId => "Gdr2333.MausBot3.ADemo";
