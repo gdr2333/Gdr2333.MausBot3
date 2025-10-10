@@ -13,7 +13,7 @@ using System.Runtime.Loader;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-Console.WriteLine("MausBot3 by df1050 - 0.0.4-alpha3 & MausBot3-PluginSdk 0.0.4-alpha3");
+Console.WriteLine("MausBot3 by df1050 - 0.0.4-alpha3-hotfix1 & MausBot3-PluginSdk 0.0.4-alpha3");
 Console.WriteLine("初始化数据......");
 
 var jsonso = new JsonSerializerOptions() { WriteIndented = true };
