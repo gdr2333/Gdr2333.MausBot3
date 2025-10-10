@@ -69,7 +69,7 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                             {
                                 logger.LogError($"在执行命令时出现了未捕捉的异常：{r.Exception}");
                                 c.SendMessageAsync((MessageReceivedEventArgsBase)e, new($"命令执行过程中出现异常（在{cmd.Id}中：{r.Exception?.InnerException?.GetType()?.FullName}:{r?.Exception?.InnerException?.Message}）。命令已终止。"));
-                            });
+                            }, TaskContinuationOptions.OnlyOnFaulted);
                             if (cmd.Command.IsExclusiveHandler)
                                 return;
                         }
@@ -82,7 +82,7 @@ internal class BotService(ReverseWebSocketClient client, Data data, PluginData p
                                 logger.LogError($"在执行命令时出现了未捕捉的异常：{r.Exception}");
                                 if (gid.HasValue || uid.HasValue)
                                     c.SendMessageAsync(e, new($"命令执行过程中出现异常（在{cmd.Id}中：{r.Exception?.InnerException?.GetType()?.FullName}:{r?.Exception?.InnerException?.Message}）。命令已终止。"));
-                            });
+                            }, TaskContinuationOptions.OnlyOnFaulted);
                         if (cmd.Command.IsExclusiveHandler)
                             return;
                     }
