@@ -414,7 +414,8 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                             sb.Append(alias);
                             sb.Append('，');
                         }
-                        sb[^1] = '\n';
+                        if(sb.Length > 0)
+                            sb[^1] = '\n';
                         return sb.ToString();
                     };
                     string? res = null;
