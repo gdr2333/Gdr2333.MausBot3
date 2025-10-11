@@ -22,7 +22,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             new StandardCommand(
                 "添加管理员",
                 [],
-                "添加指定用户到管理员组。用法：{命令前缀}添加管理员 [管理员QQ号|@新管理员]",
+                "添加指定用户到管理员组。用法：{指令前缀}添加管理员 [管理员QQ号|@新管理员]",
                 "^{0}{1} +@?\\d+$",
                 async (c, m, fuck0) =>
                 {
@@ -62,7 +62,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             .. new CommandEx(
                 "成为管理员",
                 [],
-                "将当前用户设置为管理员（当然要验证码）。用法：{命令前缀}添加管理员",
+                "将当前用户设置为管理员（当然要验证码）。用法：{指令前缀}添加管理员",
                 "^{0}{1}$",
                 async (mp, se, ct) =>
                 {
@@ -181,7 +181,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             .. new CommandEx(
                 "添加黑名单",
                 [],
-                "将用户或群添加到某个指令或群的黑名单。单行用法：{命令前缀}添加黑名单 [群/用户][群号] [可选：命令ID]",
+                "将用户或群添加到某个指令或群的黑名单。单行用法：{指令前缀}添加黑名单 [群/用户][群号] [可选：指令ID]",
                 "^{0}{1}(\\s*(群|用户)\\s*\\d+\\s*\\S*)?$",
                 async (mp, se, ct) =>
                 {
@@ -253,7 +253,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             new StandardCommand(
                 "全局黑名单列表",
                 [],
-                "显示当前的全局黑名单。用法：{命令前缀}全局黑名单列表[可选：页数]",
+                "显示当前的全局黑名单。用法：{指令前缀}全局黑名单列表[可选：页数]",
                 "^{0}{1}\\s*(?<page>\\d+)?$",
                 async (c, e, m) =>
                 {
@@ -289,8 +289,8 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             new StandardCommand(
                 "指令黑名单列表",
                 [],
-                "显示当前的指令黑名单。用法：{命令前缀}指令黑名单列表{三选一：[命令={命令限定名称}]，[用户={用户ID}]。[群={群号}]}",
-                "^{0}{1}\\s?((((?:cmd|command|命令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))$",
+                "显示当前的指令黑名单。用法：{指令前缀}指令黑名单列表{三选一：[指令={指令限定名称}]，[用户={用户ID}]。[群={群号}]}",
+                "^{0}{1}\\s?((((?:cmd|command|指令)=(?<cmdId>\\S+))|((?:user|uid|用户)=(?<userId>\\d+))|((?:group|gid|群)=(?<groupId>\\d+))))$",
                 async (c, e, m) =>
                 {
                     var cmd = m.Groups["cmdId"].Value;
@@ -323,7 +323,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             new StandardCommand(
                 "删除黑名单",
                 [],
-                "从黑名单中移除指定条目。用法：{命令前缀}删除黑名单 [指令ID 或 \"全局\"] [(用户/群)ID 或 \"所有\"]。例：删除黑名单 全局 用户114514",
+                "从黑名单中移除指定条目。用法：{指令前缀}删除黑名单 [指令ID 或 \"全局\"] [(用户/群)ID 或 \"所有\"]。例：删除黑名单 全局 用户114514",
                 "^{0}{1}\\s+(?:全局|(?<cmdId>.+))\\s+(?:(?:(?<targetType>用户|群)(?<targetId>\\d+))|所有)$",
                 async (c, e, res) =>
                 {
@@ -375,7 +375,7 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
             new StandardCommand(
                 "添加别名",
                 ["alias"],
-                "添加指定命令的别名。用法：{命令前缀}添加别名 [命令ID] \"[别名]\"",
+                "添加指定指令的别名。用法：{指令前缀}添加别名 [指令ID] \"[别名]\"",
                 "^{0}{1}\\s+(?<commandId>.+)\\s+\"(?<newAlias>.+)\"$",
                 async (c, e, rs) =>
                 {
@@ -394,10 +394,51 @@ internal class AdminPlugin(IInternalData data, ILoggerFactory loggerFactory, ILi
                         {
                             data.GlobalLock.ExitWriteLock();
                         }
-                        await c.SendMessageAsync(e, new($"已经添加了命令{cid}的别名{alias}"));
+                        await c.SendMessageAsync(e, new($"已经添加了指令{cid}的别名{alias}"));
                     }
                     else
                         await c.SendMessageAsync(e, new("指令不存在"));
-                })
+                }),
+            new StandardCommand(
+                "帮助",
+                ["指令帮助", "man", "manual"],
+                "搜索指定指令的帮助。用法：指令帮助 [指令ID或别名]",
+                "^{0}{1}\\s*(?<name>.*)$",
+                async (c, e, r) =>
+                {
+                    static string cmdAliasGen(CommandBase cmd)
+                    {
+                        StringBuilder sb = new();
+                        foreach(var alias in cmd.CommandAlias)
+                        {
+                            sb.Append(alias);
+                            sb.Append('，');
+                        }
+                        sb[^1] = '\n';
+                        return sb.ToString();
+                    };
+                    string? res = null;
+                    try
+                    {
+                        data.GlobalLock.EnterReadLock();
+                        var target = r.Groups["name"].Value;
+                        foreach(var cmd in commands)
+                            if(cmd.Command.CommandName == target || cmd.Command.CommandAlias.Contains(target))
+                            {
+                                res = $"指令{cmd.Command.CommandName}，ID={cmd.Id}\n{cmdAliasGen(cmd.Command)}{cmd.Command.CommandDescription}";
+                                break;
+                            }
+                    }
+                    finally
+                    {
+                        data.GlobalLock.ExitReadLock();
+                    }
+                    if(res is null)
+                        await c.SendMessageAsync(e, new("找不到指令"));
+                    else
+                        await c.SendMessageAsync(e, new(res));
+                    return;
+                }
+            )
         ];
 }
